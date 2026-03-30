@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+infra
+cdk.out
+*.log
+.env
+.env.*
+credentials.json
+.git
+.github
+.vscode
+.idea
+*.md
+LICENSE
+ui/
+test_web_component.html

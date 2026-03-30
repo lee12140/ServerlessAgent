@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.npm/
+
+# CDK
+cdk.out/
+.cdk.staging/
+
+# Compilation
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+credentials.json
+*.pem
+*.key
+
+# Python
+.venv/
+env/
+__pycache__/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
