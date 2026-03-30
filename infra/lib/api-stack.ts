@@ -25,6 +25,13 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
+    // Rate limiting — 10 req/sec sustained, burst of 20
+    const cfnStage = httpApi.defaultStage?.node.defaultChild as apigateway.CfnStage;
+    cfnStage.defaultRouteSettings = {
+      throttlingRateLimit: 10,
+      throttlingBurstLimit: 20,
+    };
+
     // Connect the API to our (soon to be created) Lambda Handler
     httpApi.addRoutes({
       path: '/webhook',
