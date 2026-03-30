@@ -53,8 +53,25 @@ this.handler.addToRolePolicy(new iam.PolicyStatement({
 
 ## ✏️ Step 3: The Record Button (UI)
 
-We'll add a 🎙️ button to our Web Component. It will use the browser's `MediaRecorder` API to capture your audio.
+We'll add a 🎙️ button to our Web Component. It will use the browser's `MediaRecorder` API to capture your audio and send it as a base64-encoded payload in the same `/webhook` request:
 
-✅ **Concept Ready!** Next we'll implement the infrastructure changes.
+```json
+{
+  "sessionId": "abc123",
+  "audio": "<base64-encoded audio data>"
+}
+```
 
-➡️ **Next: [Module 18 — Implementing the Audio Pipeline](./18-audio-logic.md)**
+Middleware checks for the `audio` field. If present, it routes to the **Transcriber** first, then passes the resulting text to the **Agent**.
+
+---
+
+## ✅ The Full Pipeline is Live
+
+The complete implementation of all three steps above is already in the project:
+
+- **Infrastructure:** `infra/lib/db-stack.ts` (S3 bucket) and `infra/lib/lambda-stack.ts` (Transcriber permissions)
+- **Transcriber logic:** `services/transcriber/src/index.ts`
+- **Middleware routing:** `services/middleware/src/index.ts` (checks for `audio` field and invokes Transcriber)
+
+Open those files to see the full implementation. The pattern follows exactly what this module described: audio → S3 → Transcribe → text → Agent.

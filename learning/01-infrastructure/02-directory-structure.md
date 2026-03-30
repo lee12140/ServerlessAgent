@@ -6,28 +6,36 @@ Now that we have our tools installed, let's organize our workspace. A clean proj
 We are splitting our project into three main areas:
 
 ### 1. The Infrastructure (`/infra`)
-This is where the "Blueprint" of your cloud environment lives. 
+This is where the "Blueprint" of your cloud environment lives.
 - `infra/bin`: The entry point for the CDK. This is the script that "starts" the deployment.
 - `infra/lib`: Where the actual resource definitions (Stacks) live. For example, your database stack and your API stack.
 
-### 2. The Source Code (`/src`)
-This is the "Brain" of your agent. 
-- `src/handlers`: The entry points for your Lambda functions. When an API request comes in, AWS calls one of these handlers.
-- `src/skills`: The specific tools your AI can use (e.g., searching the web, sending emails).
-- `src/memory`: How your AI remembers past conversations (using DynamoDB).
+### 2. The Services (`/services`)
+Instead of one big Lambda, we split the work across three specialist microservices. Each service is self-contained with its own source code, dependencies, and Dockerfile.
 
-### 3. The Container (`/docker`)
-Since we are using **Lambda Container Images**, we need a `Dockerfile`. This file tells AWS how to build the "box" that our code runs in.
+- `services/agent/` — The AI Brain. Handles reasoning, tool use, and DynamoDB memory.
+  - `src/index.ts`: Lambda handler entry point
+  - `src/agent.ts`: The ReAct loop (think → act → observe)
+  - `src/adapters/`: Bedrock and DynamoDB clients
+  - `src/skills/`: Tools the AI can call (e.g., web search, calendar)
+  - `docker/Dockerfile`: Container definition for this service
 
-## Commands to run
-You can create all these folders at once! In your terminal, run:
+- `services/middleware/` — The Orchestrator. Receives HTTP requests, validates the API key, and routes to the right specialist.
+  - `src/index.ts`: Lambda handler entry point
+  - `docker/Dockerfile`: Container definition
 
-```powershell
-mkdir -p infra/bin, infra/lib, src/handlers, src/skills, src/memory, docker
-```
-*(Wait, on Windows PowerShell, the syntax is a bit different if you want to do it in one go, but simple `mkdir` works for single folders too.)*
+- `services/transcriber/` — The Ears. Converts voice audio to text using Amazon Transcribe.
+  - `src/index.ts`: Lambda handler entry point
+  - `docker/Dockerfile`: Container definition
 
+### 3. The Infrastructure (`/infra`)
+Each service gets its own Docker image but they are all defined and deployed together from the CDK stacks in `/infra`.
+
+## Commands to create the structure
 For Windows PowerShell:
 ```powershell
-New-Item -ItemType Directory -Path infra/bin, infra/lib, src/handlers, src/skills, src/memory, docker
+New-Item -ItemType Directory -Path infra/bin, infra/lib
+New-Item -ItemType Directory -Path services/agent/src/adapters, services/agent/src/skills, services/agent/docker
+New-Item -ItemType Directory -Path services/middleware/src, services/middleware/docker
+New-Item -ItemType Directory -Path services/transcriber/src, services/transcriber/docker
 ```

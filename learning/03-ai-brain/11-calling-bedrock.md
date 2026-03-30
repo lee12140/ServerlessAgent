@@ -1,6 +1,6 @@
 # Module 11: The First Thought (Calling Bedrock) 🧠
 
-Your agent now has a "Voice box" (permissions). Now it needs a "Brain." While Nova Micro is the cheapest, for a **great all-rounder** that is smart enough to follow complex agent instructions, we recommend **Claude 3.5 Sonnet**. It is the gold standard for AI agents right now.
+Your agent now has a "Voice box" (permissions). Now it needs a "Brain." We'll use **Amazon Nova Lite** — a fast, cost-efficient model that handles multi-turn conversations and tool use well.
 
 ## 📦 1. Install the SDK
 Before we can write the code, we need the library that talks to Bedrock. Run this in your terminal:
@@ -26,9 +26,9 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const body = event.body ? JSON.parse(event.body) : {};
     const userMessage = body.message || "Hello!";
 
-    // 2. Prepare the request for Claude 3.5 Sonnet (The All-Rounder!)
+    // 2. Prepare the request for Nova Lite
     const command = new ConverseCommand({
-        modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0', 
+        modelId: 'eu.amazon.nova-lite-v1:0',
         messages: [
             {
                 role: 'user',
@@ -74,6 +74,6 @@ npx cdk deploy OpenClawLambdaStack
 
 ---
 ### ⚠️ One Important Check!
-You MUST go to the [**AWS Bedrock Console**](https://eu-central-1.console.aws.amazon.com/bedrock/home?region=eu-central-1#/modelaccess) and click **"Edit"** -> **"Request Access"** for **Amazon Nova Micro**. 
+You MUST go to the **AWS Bedrock Console** → **Model access** (in the `eu-central-1` region) and click **"Edit"** → **"Request Access"** for **Amazon Nova Lite**.
 
 *Once access is granted and you've deployed, your bot will start talking for pennies!*

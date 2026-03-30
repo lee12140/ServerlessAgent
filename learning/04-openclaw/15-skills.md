@@ -16,19 +16,21 @@ The agent uses a **Tool Use** pattern (also called "function calling"). The flow
 ---
 
 ## 🗂️ File Structure
-Each skill is a single TypeScript file in `src/skills/` — which you've already started!
+Each skill is a single TypeScript file in `services/agent/src/skills/`:
 
 ```
-src/skills/
-├── get-time.ts     ← ✅ Already created by you!
-└── (more to come)
+services/agent/src/skills/
+├── get-time.ts     ← ✅ Already created for you!
+├── calendar.ts     ← Google Calendar integration
+├── research.ts     ← DuckDuckGo web search
+└── (add more here)
 ```
 
 ---
 
 ## ✏️ Step 1: Review Your First Skill (`get-time.ts`)
 
-You've already created `src/skills/get-time.ts` — great! Here's a breakdown of what each part means:
+Open `services/agent/src/skills/get-time.ts`. Here's a breakdown of what each part means:
 
 ```typescript
 /**
@@ -58,14 +60,14 @@ export function getTime(): string {
 
 ---
 
-## ✏️ Step 2: Register the Skill in `src/agent.ts`
+## ✏️ Step 2: Register the Skill in `services/agent/src/agent.ts`
 
-Update `src/agent.ts` to tell the LLM about your skills and handle tool calls:
+Update `services/agent/src/agent.ts` to tell the LLM about your skills and handle tool calls:
 
 ```typescript
 import { DynamoMemoryAdapter, type AgentState } from './adapters/dynamo-memory.js';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
-import { getTimeDefinition, getTime } from './skills/get-time.js';
+import { getTimeDefinition, getTime } from './skills/get-time.js'; // services/agent/src/skills/get-time.ts
 
 const bedrock = new BedrockRuntimeClient({ region: process.env.REGION || 'eu-central-1' });
 
@@ -160,7 +162,7 @@ npx cdk deploy OpenClawLambdaStack
 ## 🧪 Step 4: Test the Skill!
 
 ```powershell
-Invoke-RestMethod -Uri "https://2q2i0svz82.execute-api.eu-central-1.amazonaws.com/webhook" -Method Post -Body '{"message": "What time is it right now?", "sessionId": "skills-test-1"}' -ContentType "application/json"
+Invoke-RestMethod -Uri "YOUR_API_URL/webhook" -Method Post -Body '{"message": "What time is it right now?", "sessionId": "skills-test-1"}' -ContentType "application/json" -Headers @{"x-api-key"="YOUR_API_KEY"}
 ```
 
 ✅ **Success:** The AI uses the `get_current_time` tool and replies with the actual current time — not a hallucination!

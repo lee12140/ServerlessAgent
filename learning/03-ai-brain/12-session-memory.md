@@ -173,8 +173,8 @@ npx cdk deploy OpenClawLambdaStack
 ## 🧪 Step 6: Test The Memory!
 ```powershell
 # First message
-Invoke-RestMethod -Uri "https://2q2i0svz82.execute-api.eu-central-1.amazonaws.com/webhook" -Method Post -Body '{"message": "My name is Leo", "sessionId": "test-session-1"}' -ContentType "application/json"
+Invoke-RestMethod -Uri "YOUR_API_URL/webhook" -Method Post -Body '{"message": "My name is Leo", "sessionId": "test-session-1"}' -ContentType "application/json"
 
 # Ask follow-up - AI should remember your name!
-Invoke-RestMethod -Uri "https://2q2i0svz82.execute-api.eu-central-1.amazonaws.com/webhook" -Method Post -Body '{"message": "What is my name?", "sessionId": "test-session-1"}' -ContentType "application/json"
+Invoke-RestMethod -Uri "YOUR_API_URL/webhook" -Method Post -Body '{"message": "What is my name?", "sessionId": "test-session-1"}' -ContentType "application/json"
 ```

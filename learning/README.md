@@ -26,10 +26,11 @@ This folder contains step-by-step learning modules for the Serverless OpenClaw p
 | [11-calling-bedrock.md](./03-ai-brain/11-calling-bedrock.md) | First LLM call |
 | [12-session-memory.md](./03-ai-brain/12-session-memory.md) | DynamoDB memory |
 
-## 04-openclaw — Stateless OpenClaw Integration *(Next)*
+## 04-openclaw — Stateless OpenClaw Integration
 | Module | Topic |
 |---|---|
 | [13-openclaw-intro.md](./04-openclaw/13-openclaw-intro.md) | What is OpenClaw? |
 | [14-stateless-adapter.md](./04-openclaw/14-stateless-adapter.md) | The core adapter pattern |
 | [15-skills.md](./04-openclaw/15-skills.md) | Building Skills |
-| [16-webhooks.md](./04-openclaw/16-webhooks.md) | Telegram/Discord integration |
+| [16-webhooks.md](./04-openclaw/16-webhooks.md) | Embeddable web chat component |
+| [17-audio.md](./04-openclaw/17-audio.md) | Adding voice input (Amazon Transcribe) |

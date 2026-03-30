@@ -1,57 +1,62 @@
 # Learning Module 07: Containerizing the Logic (Docker)
 
-Now we're crossing the bridge from **Infrastructure** to **Logic**. Since we're using a container, we need to define how that container is built.
+Now we're crossing the bridge from **Infrastructure** to **Logic**. Since we're using Docker containers, we need to define how each one is built.
 
 ## Why the Lambda Base Image?
-AWS provides special Docker base images that are optimized for Lambda. They include the "Lambda Runtime Interface Emulator," which allows the function to talk to AWS.
+AWS provides special Docker base images optimized for Lambda. They include the "Lambda Runtime Interface Emulator," which allows the function to talk to AWS.
 
-## The Dockerfile
-Create a new file named `docker/Dockerfile` and paste the following:
+## Why a Multi-Stage Build?
+Our Dockerfile uses two `FROM` stages:
+1. **Builder stage:** Installs all dependencies (including dev tools like TypeScript) and compiles the code.
+2. **Runtime stage:** Copies only the compiled output and production `node_modules` — leaving all dev tools behind.
+
+This keeps the final image small and fast.
+
+## The Dockerfile (per service)
+Each service has its own Dockerfile at `services/<name>/docker/Dockerfile`. Here is the pattern they all follow — using the Agent as the example:
 
 ```dockerfile
-# Use the official AWS Lambda Node.js 22 image
-FROM public.ecr.aws/lambda/nodejs:22
-
-# Copy the package.json and install dependencies
-COPY package.json ${LAMBDA_TASK_ROOT}
+# Stage 1: Build
+FROM public.ecr.aws/lambda/nodejs:22 AS builder
+WORKDIR /var/task
+COPY package.json tsconfig.json ./
 RUN npm install
-
-# Copy the source code (we'll build it later)
-COPY src/ ${LAMBDA_TASK_ROOT}/src/
-COPY tsconfig.json ${LAMBDA_TASK_ROOT}
-
-# Compile TypeScript to JavaScript
+COPY src/ ./src/
 RUN npx tsc
 
-# Set the CMD to your handler (we'll create this file next)
-CMD [ "src/handlers/index.handler" ]
+# Stage 2: Runtime
+FROM public.ecr.aws/lambda/nodejs:22
+WORKDIR /var/task
+COPY --from=builder /var/task/dist ./dist
+COPY --from=builder /var/task/node_modules ./node_modules
+COPY package.json ./
+CMD ["dist/index.handler"]
 ```
 
 ## The Lambda Entry Point
-Now, even though our agent isn't "smart" yet, we need a simple file to prove that the Lambda works.
-
-Create a new file named `src/handlers/index.ts` and paste the following:
+Each service has a simple `src/index.ts` that acts as the Lambda handler. Here is the Agent's:
 
 ```typescript
-import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { runAgentTurn } from './agent.js';
 
-export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-  console.log('Received event:', JSON.stringify(event, null, 2));
+export const handler = async (event: any) => {
+  const { sessionId, message } = event;
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Hello from Serverless OpenClaw!',
-      input: event.body,
-    }),
-  };
+  if (!message) {
+    throw new Error('No message provided to Agent');
+  }
+
+  const reply = await runAgentTurn(sessionId || 'default', message);
+
+  return { message: reply, sessionId };
 };
 ```
 
 ### What's happening here?
-1. **`FROM public.ecr.aws/lambda/nodejs:22`**: This is the official "box" provided by Amazon.
-2. **`${LAMBDA_TASK_ROOT}`**: This is a special folder inside the Lambda container where AWS expects your code to be.
-3. **`handler`**: This is the function that AWS will call. It takes an `event` (the API request) and returns a `result` (the API response).
+1. **`FROM ... AS builder`**: Names the first stage `builder` so we can copy from it later.
+2. **`RUN npx tsc`**: Compiles TypeScript into the `dist/` folder.
+3. **`COPY --from=builder`**: Pulls only the compiled output into the lean runtime image.
+4. **`CMD ["dist/index.handler"]`**: Tells Lambda which file and exported function to call. `dist/index.handler` means `dist/index.js` → `export const handler`.
 
 > [!NOTE]
-> We are using `npx tsc` inside the Dockerfile to make sure the code is compiled correctly for the cloud environment.
+> Notice that unlike the simple single-file approach, the Agent's handler does **not** talk to Bedrock or DynamoDB directly — it delegates to `agent.ts`. This separation keeps the handler clean and the logic testable.

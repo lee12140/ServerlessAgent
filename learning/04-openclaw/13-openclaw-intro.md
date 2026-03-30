@@ -1,6 +1,6 @@
 # Module 13: What is OpenClaw? 🦾
 
-OpenClaw is an open-source, autonomous AI agent framework written in TypeScript. It is one of the fastest-growing open-source projects ever (214k+ GitHub stars in just a few months).
+OpenClaw is the autonomous AI agent framework powering this project. It is written in TypeScript and designed around a clean, serverless-compatible architecture.
 
 ## How it's different from a "chatbot"
 
