@@ -1,13 +1,13 @@
 import { DynamoMemoryAdapter, type AgentState } from './adapters/dynamo-memory.js';
-import { BedrockRuntimeClient, ConverseCommand, type Message } from '@aws-sdk/client-bedrock-runtime';
+import { converse, DEFAULT_MODEL_ID } from './adapters/bedrock.js';
+import type { Message } from './adapters/bedrock.js';
 import { getTimeDefinition, getTime } from './skills/get-time.js';
 import { createMeetingDefinition, createMeeting } from './skills/calendar.js';
 import { researchDefinition, webSearch } from './skills/research.js';
 
-const MODEL_ID = process.env.MODEL_ID || 'eu.amazon.nova-lite-v1:0';
+const MODEL_ID = process.env.MODEL_ID || DEFAULT_MODEL_ID;
 const MAX_ITERATIONS = 5;
 
-const bedrock = new BedrockRuntimeClient({ region: process.env.REGION || 'eu-central-1' });
 const memory = new DynamoMemoryAdapter(process.env.TABLE_NAME!);
 
 const SYSTEM_PROMPT = `You are a professional Executive Personal Assistant. Your goal is to manage the user's schedule and information with extreme professionalism and proactivity.
@@ -53,13 +53,12 @@ function buildMessages(savedState: AgentState, userMessage: string): Message[] {
 // or null if the loop exhausted all iterations without reaching end_turn.
 async function executeReActLoop(messages: Message[]): Promise<string | null> {
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await bedrock.send(new ConverseCommand({
-      modelId: MODEL_ID,
-      system: [{ text: SYSTEM_PROMPT }],
+    const response = await converse({
       messages,
-      toolConfig: { tools: TOOLS.map(t => ({ toolSpec: t })) },
-      inferenceConfig: { maxTokens: 2000, temperature: 0.7 },
-    }));
+      systemPrompt: SYSTEM_PROMPT,
+      tools: TOOLS,
+      modelId: MODEL_ID,
+    });
 
     if (response.stopReason === 'end_turn') {
       const raw = response.output?.message?.content?.[0]?.text ?? '';

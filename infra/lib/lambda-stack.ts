@@ -32,10 +32,11 @@ export class LambdaStack extends cdk.Stack {
       environment: {
         TABLE_NAME: props.tableName,
         REGION: 'eu-central-1',
+        MODEL_ID: 'eu.anthropic.claude-3-haiku-20240307-v1:0',
         GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
         GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY || '',
         GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || '',
-        CODE_VERSION: '1.0.2', // Bump this to force redeploy
+        CODE_VERSION: '1.0.5', // Bump this to force redeploy
       },
     });
 

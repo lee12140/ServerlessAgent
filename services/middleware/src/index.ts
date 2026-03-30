@@ -7,6 +7,15 @@ function json(statusCode: number, body: object): APIGatewayProxyResultV2 {
     return { statusCode, body: JSON.stringify(body) };
 }
 
+function decodeLambdaPayload<T>(payload: Uint8Array): T {
+    const parsed = JSON.parse(new TextDecoder().decode(payload)) as Record<string, unknown>;
+    if (parsed['errorMessage']) throw new Error(parsed['errorMessage'] as string);
+    return parsed as T;
+}
+
+interface TranscriberResponse { text: string; }
+interface AgentResponse { message: string; sessionId: string; }
+
 /**
  * Middleware Handler (The Orchestrator)
  * Responsibility: Receive request, check for audio/text, invoke specialists.
@@ -22,27 +31,21 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     try {
         // 2. Parse Body
-        const body = event.body ? JSON.parse(event.body) : {};
-        let userMessage: string = body.message;
-        const sessionId: string = body.sessionId || 'default';
+        const body = event.body ? JSON.parse(event.body) as Record<string, unknown> : {};
+        let userMessage = body['message'] as string | undefined;
+        const sessionId = (body['sessionId'] as string | undefined) ?? 'default';
 
         // 3. Handle Audio (if present)
-        if (body.audio) {
+        if (body['audio']) {
             console.log('Audio detected, invoking Transcriber...');
             const transcribeResult = await lambda.send(new InvokeCommand({
                 FunctionName: process.env.TRANSCRIBE_FUNCTION_NAME,
-                Payload: JSON.stringify({ audio: body.audio, sessionId }),
+                Payload: JSON.stringify({ audio: body['audio'], sessionId }),
             }));
 
-            const rawPayload = new TextDecoder().decode(transcribeResult.Payload);
-            console.log('Transcriber raw response:', rawPayload);
-
-            const payload = JSON.parse(rawPayload);
-            if (payload.errorMessage) {
-                console.error('Transcriber error:', payload.errorMessage);
-                return json(502, { error: 'Transcription failed', detail: payload.errorMessage });
-            }
-            userMessage = payload.text || '(Silence or unintelligible audio)';
+            const { text } = decodeLambdaPayload<TranscriberResponse>(transcribeResult.Payload!);
+            userMessage = text || '(Silence or unintelligible audio)';
+            console.log('Transcription result:', userMessage);
         }
 
         // 4. Call Agent
@@ -52,22 +55,17 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
             Payload: JSON.stringify({ message: userMessage || 'Hello', sessionId }),
         }));
 
-        const agentPayload = JSON.parse(new TextDecoder().decode(agentResult.Payload));
-        if (agentPayload.errorMessage) {
-            console.error('Agent error:', agentPayload.errorMessage);
-            return json(502, { error: 'Agent failed', detail: agentPayload.errorMessage });
-        }
+        const agentPayload = decodeLambdaPayload<AgentResponse>(agentResult.Payload!);
 
         // 5. Build Response (include transcription if audio was used)
-        let finalMessage: string = agentPayload.message;
-        if (body.audio) {
-            finalMessage = `Translation: ${userMessage}\n\nAnswer: ${agentPayload.message}`;
-        }
+        const finalMessage = body['audio']
+            ? `Translation: ${userMessage}\n\nAnswer: ${agentPayload.message}`
+            : agentPayload.message;
 
         return json(200, {
             message: finalMessage,
             sessionId: agentPayload.sessionId,
-            source: body.audio ? 'voice' : 'text',
+            source: body['audio'] ? 'voice' : 'text',
         });
 
     } catch (err: unknown) {

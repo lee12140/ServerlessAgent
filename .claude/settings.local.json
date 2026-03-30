@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(aws sts:*)",
+      "Bash(docker info:*)",
+      "Bash(npx cdk:*)",
+      "Bash(curl -s -X POST https://oxbvyvlyc1.execute-api.eu-central-1.amazonaws.com/webhook -H \"Content-Type: application/json\" -H \"x-api-key: OC-9f8e7d6c5b4a3210\" -d '{\"\"message\"\": \"\"What time is it?\"\", \"\"sessionId\"\": \"\"test-1\"\"}')",
+      "Bash(curl -s -X POST https://oxbvyvlyc1.execute-api.eu-central-1.amazonaws.com/webhook -H \"Content-Type: application/json\" -H \"x-api-key: OC-9f8e7d6c5b4a3210\" -d '{\"\"message\"\": \"\"What time is it?\"\", \"\"sessionId\"\": \"\"test-haiku\"\"}')",
+      "Bash(aws bedrock-runtime:*)",
+      "Bash(curl -s -X POST https://oxbvyvlyc1.execute-api.eu-central-1.amazonaws.com/webhook -H \"Content-Type: application/json\" -H \"x-api-key: OC-9f8e7d6c5b4a3210\" -d '{\"\"message\"\": \"\"What time is it?\"\", \"\"sessionId\"\": \"\"test-haiku35\"\"}')",
+      "Bash(aws lambda:*)"
+    ]
+  }
+}

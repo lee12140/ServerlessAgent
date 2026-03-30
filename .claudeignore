@@ -1,0 +1,35 @@
+# Secrets & credentials — never read these
+.env
+.env.*
+credentials.json
+*.pem
+*.key
+
+# Dependencies — too large, not useful
+node_modules/
+.npm/
+
+# CDK build output — generated, not source
+cdk.out/
+.cdk.staging/
+
+# Compilation output — read source instead
+dist/
+build/
+*.tsbuildinfo
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# Logs
+*.log
+npm-debug.log*
+
+# Learning docs — reference material, not source code
+learning/
+
+# OS / IDE noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
