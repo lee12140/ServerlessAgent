@@ -33,12 +33,15 @@ export class LambdaStack extends cdk.Stack {
         TABLE_NAME: props.tableName,
         REGION: 'eu-central-1',
         MODEL_ID: 'eu.amazon.nova-pro-v1:0',
-        GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
-        GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY || '',
-        GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || '',
-        GMAIL_SENDER_EMAIL: process.env.GMAIL_SENDER_EMAIL || '',
-        WEATHER_API_KEY: process.env.WEATHER_API_KEY || '',
         CODE_VERSION: '1.0.7', // Bump this to force redeploy
+        // Required — Google Calendar & email skills
+        ...process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && { GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL },
+        ...process.env.GOOGLE_PRIVATE_KEY          && { GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY },
+        ...process.env.GOOGLE_CALENDAR_ID          && { GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID },
+        // Optional — email sending (requires Workspace domain-wide delegation)
+        ...process.env.GMAIL_SENDER_EMAIL          && { GMAIL_SENDER_EMAIL: process.env.GMAIL_SENDER_EMAIL },
+        // Optional — weather skill
+        ...process.env.WEATHER_API_KEY             && { WEATHER_API_KEY: process.env.WEATHER_API_KEY },
       },
     });
 
