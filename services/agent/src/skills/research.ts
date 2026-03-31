@@ -2,7 +2,7 @@
  * 🔍 Skill: Research (DuckDuckGo)
  * Enables the agent to search the web for real-time information.
  */
-import { search } from 'duck-duck-scrape';
+import { search, SafeSearchType } from 'duck-duck-scrape';
 
 // Tool Definition for Bedrock
 export const researchDefinition = {
@@ -34,10 +34,15 @@ export async function webSearch(input: WebSearchInput): Promise<string> {
     
     console.log(`[Research Skill] Searching for: ${query}`);
 
+    const TIMEOUT_MS = 8000;
+
     try {
-        const results = await search(query, {
-            safeSearch: 1 as any // 1 = Moderate
-        });
+        const results = await Promise.race([
+            search(query, { safeSearch: SafeSearchType.MODERATE }),
+            new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Search timed out after 8 seconds')), TIMEOUT_MS)
+            ),
+        ]);
 
         if (!results.results || results.results.length === 0) {
             return `I couldn't find any relevant web results for "${query}".`;

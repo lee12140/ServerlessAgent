@@ -19,5 +19,6 @@ export const getTimeDefinition = {
 // This is the actual implementation
 export function getTime(): string {
     const now = new Date();
-    return `The current time is ${now.toLocaleTimeString()} on ${now.toLocaleDateString('en-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
+    const tz = 'Europe/Berlin';
+    return `The current time is ${now.toLocaleTimeString('en-DE', { timeZone: tz, hour: '2-digit', minute: '2-digit' })} on ${now.toLocaleDateString('en-DE', { timeZone: tz, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
 }

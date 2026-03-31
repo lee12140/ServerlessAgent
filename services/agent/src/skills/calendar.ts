@@ -88,23 +88,10 @@ export async function createMeeting(input: CreateMeetingInput): Promise<string> 
 
         const calendar = google.calendar({ version: 'v3', auth });
 
-        // --- PRE-FLIGHT: Ensure the calendar is "added" to the service account's list ---
-        // This often fixes 404s for shared calendars
-        try {
-            console.log(`[Calendar Skill] Ensuring subscription to: ${calendarId}`);
-            await calendar.calendarList.insert({
-                requestBody: { id: calendarId }
-            });
-        } catch (e: any) {
-            // If it's already there (409), that's fine. 
-            // In other cases, we log and continue to the insert.
-            console.log(`[Calendar Skill Info] Subscription help: ${e.message}`);
-        }
-
         // 4. Create the Event
         const event = {
             summary: title,
-            description: description || 'User requested meeting',
+            ...(description ? { description } : {}),
             start: {
                 dateTime: startTime,
                 timeZone: timezone,
@@ -123,8 +110,8 @@ export async function createMeeting(input: CreateMeetingInput): Promise<string> 
 
         // Format a nice human-readable confirmation
         const dateObj = new Date(startTime);
-        const dateString = dateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const timeString = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const dateString = dateObj.toLocaleDateString('en-GB', { timeZone: timezone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const timeString = dateObj.toLocaleTimeString('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit' });
 
         return `Successfully scheduled your meeting: "${title}"! 📅
         
