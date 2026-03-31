@@ -1,38 +1,4 @@
-/**
- * Skill: Currency Exchange
- * Fetches real-time exchange rates via frankfurter.app (no API key required).
- */
-
-export const currencyExchangeDefinition = {
-  name: 'currency_exchange',
-  description: "Get the current exchange rate between two currencies, or convert an amount. Use when the user asks about exchange rates or wants to convert money.",
-  inputSchema: {
-    json: {
-      type: 'object',
-      properties: {
-        from: {
-          type: 'string',
-          description: "Source currency code (e.g., 'EUR', 'USD', 'GBP')",
-        },
-        to: {
-          type: 'string',
-          description: "Target currency code. Omit to get all major rates.",
-        },
-        amount: {
-          type: 'number',
-          description: "Amount to convert (default: 1)",
-        },
-      },
-      required: ['from'],
-    },
-  },
-};
-
-interface CurrencyInput {
-  from: string;
-  to?: string;
-  amount?: number;
-}
+import type { Skill } from './types.js';
 
 interface FrankfurterResponse {
   base: string;
@@ -40,7 +6,7 @@ interface FrankfurterResponse {
   rates: Record<string, number>;
 }
 
-export async function currencyExchange(input: CurrencyInput): Promise<string> {
+async function currencyExchange(input: { from: string; to?: string; amount?: number }): Promise<string> {
   const { from, to, amount = 1 } = input;
   const base = from.toUpperCase();
   const target = to?.toUpperCase();
@@ -55,9 +21,7 @@ export async function currencyExchange(input: CurrencyInput): Promise<string> {
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
 
-    if (!res.ok) {
-      return `Exchange rate API error: ${res.status}. Check that the currency codes are valid ISO 4217 codes.`;
-    }
+    if (!res.ok) return `Exchange rate API error: ${res.status}. Check that currency codes are valid ISO 4217.`;
 
     const data = await res.json() as FrankfurterResponse;
 
@@ -70,7 +34,6 @@ export async function currencyExchange(input: CurrencyInput): Promise<string> {
         : `${amount} ${base} = ${converted} ${target} (rate: ${rate}, as of ${data.date})`;
     }
 
-    // Return all major rates
     const lines = [`Exchange rates for ${base} (as of ${data.date}):`];
     for (const [currency, rate] of Object.entries(data.rates)) {
       lines.push(`  ${currency}: ${rate}`);
@@ -81,3 +44,22 @@ export async function currencyExchange(input: CurrencyInput): Promise<string> {
     return `Failed to fetch exchange rates: ${error.message}`;
   }
 }
+
+export const currencyExchangeSkill: Skill = {
+  definition: {
+    name: 'currency_exchange',
+    description: "Get real-time exchange rates or convert an amount between currencies.",
+    inputSchema: {
+      json: {
+        type: 'object',
+        properties: {
+          from:   { type: 'string', description: "Source currency code (e.g., 'EUR', 'USD')" },
+          to:     { type: 'string', description: "Target currency code. Omit to get all major rates." },
+          amount: { type: 'number', description: "Amount to convert (default: 1)" },
+        },
+        required: ['from'],
+      },
+    },
+  },
+  execute: (input) => currencyExchange(input as { from: string; to?: string; amount?: number }),
+};

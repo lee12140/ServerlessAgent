@@ -1,8 +1,4 @@
-/**
- * Skill: Notes
- * Store and retrieve personal notes in DynamoDB.
- * Uses the existing TABLE_NAME table with a "note#<key>" partition key.
- */
+import type { Skill } from './types.js';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -10,125 +6,95 @@ const dynamo = DynamoDBDocumentClient.from(
   new DynamoDBClient({ region: process.env.REGION || 'eu-central-1' })
 );
 
-// --- Set Note ---
-
-export const setNoteDefinition = {
-  name: 'set_note',
-  description: "Save a personal note under a short key/title. Use when the user wants to remember something, jot something down, or save information for later.",
-  inputSchema: {
-    json: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: "A short identifier for the note (e.g., 'grocery-list', 'project-ideas', 'passwords-hint'). Lowercase, no spaces.",
-        },
-        content: {
-          type: 'string',
-          description: "The content to save in the note",
-        },
-      },
-      required: ['key', 'content'],
-    },
-  },
-};
-
-interface SetNoteInput {
-  key: string;
-  content: string;
+function tableOrError(): string | null {
+  return process.env.NOTES_TABLE_NAME ?? null;
 }
 
-export async function setNote(input: SetNoteInput): Promise<string> {
+async function setNote(input: { key: string; content: string }): Promise<string> {
   const { key, content } = input;
-  const tableName = process.env.NOTES_TABLE_NAME;
-
-  if (!tableName) return 'Cannot save note: NOTES_TABLE_NAME environment variable is not set.';
+  const table = tableOrError();
+  if (!table) return 'Cannot save note: NOTES_TABLE_NAME is not set.';
 
   const noteKey = `note#${key.toLowerCase().replace(/\s+/g, '-')}`;
-
   try {
     await dynamo.send(new PutCommand({
-      TableName: tableName,
-      Item: {
-        sessionId: noteKey,
-        noteContent: content,
-        updatedAt: Date.now(),
-      },
+      TableName: table,
+      Item: { sessionId: noteKey, noteContent: content, updatedAt: Date.now() },
     }));
-    return `Note "${key}" saved successfully.`;
+    return `Note "${key}" saved.`;
   } catch (error: any) {
-    console.error('[SetNote ERROR]:', error.message);
     return `Failed to save note: ${error.message}`;
   }
 }
 
-// --- Get Note ---
-
-export const getNoteDefinition = {
-  name: 'get_note',
-  description: "Retrieve a previously saved note by its key. Use when the user asks to recall, read, or retrieve a note they saved earlier.",
-  inputSchema: {
-    json: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: "The key of the note to retrieve. If unsure, pass 'list' to see all saved note keys.",
-        },
-      },
-      required: ['key'],
-    },
-  },
-};
-
-interface GetNoteInput {
-  key: string;
-}
-
-export async function getNote(input: GetNoteInput): Promise<string> {
+async function getNote(input: { key: string }): Promise<string> {
   const { key } = input;
-  const tableName = process.env.NOTES_TABLE_NAME;
+  const table = tableOrError();
+  if (!table) return 'Cannot read note: NOTES_TABLE_NAME is not set.';
 
-  if (!tableName) return 'Cannot read note: NOTES_TABLE_NAME environment variable is not set.';
-
-  // Special key: list all notes
   if (key === 'list') {
     try {
       const result = await dynamo.send(new ScanCommand({
-        TableName: tableName,
-        FilterExpression: 'begins_with(sessionId, :prefix)',
-        ExpressionAttributeValues: { ':prefix': 'note#' },
+        TableName: table,
+        FilterExpression: 'begins_with(sessionId, :p)',
+        ExpressionAttributeValues: { ':p': 'note#' },
         ProjectionExpression: 'sessionId, updatedAt',
       }));
-
       const items = result.Items ?? [];
       if (items.length === 0) return 'No notes saved yet.';
-
-      const list = items.map(item => {
-        const noteKey = (item['sessionId'] as string).replace('note#', '');
-        const updated = item['updatedAt'] ? new Date(item['updatedAt'] as number).toLocaleDateString('en-GB') : 'unknown';
-        return `• ${noteKey} (updated ${updated})`;
+      return 'Saved notes:\n' + items.map(i => {
+        const k = (i['sessionId'] as string).replace('note#', '');
+        const d = i['updatedAt'] ? new Date(i['updatedAt'] as number).toLocaleDateString('en-GB') : 'unknown';
+        return `• ${k} (updated ${d})`;
       }).join('\n');
-
-      return `Saved notes:\n${list}`;
     } catch (error: any) {
       return `Failed to list notes: ${error.message}`;
     }
   }
 
-  const noteKey = `note#${key.toLowerCase().replace(/\s+/g, '-')}`;
-
   try {
     const result = await dynamo.send(new GetCommand({
-      TableName: tableName,
-      Key: { sessionId: noteKey },
+      TableName: table,
+      Key: { sessionId: `note#${key.toLowerCase().replace(/\s+/g, '-')}` },
     }));
-
     if (!result.Item) return `No note found with key "${key}".`;
-
     return `Note "${key}":\n${result.Item['noteContent']}`;
   } catch (error: any) {
-    console.error('[GetNote ERROR]:', error.message);
     return `Failed to retrieve note: ${error.message}`;
   }
 }
+
+export const setNoteSkill: Skill = {
+  definition: {
+    name: 'set_note',
+    description: "Save a personal note under a short key. Use when the user wants to remember something for later.",
+    inputSchema: {
+      json: {
+        type: 'object',
+        properties: {
+          key:     { type: 'string', description: "Short identifier (e.g., 'grocery-list'). Lowercase, no spaces." },
+          content: { type: 'string', description: "The content to save" },
+        },
+        required: ['key', 'content'],
+      },
+    },
+  },
+  execute: (input) => setNote(input as { key: string; content: string }),
+};
+
+export const getNoteSkill: Skill = {
+  definition: {
+    name: 'get_note',
+    description: "Retrieve a saved note by key. Pass key='list' to see all saved note keys.",
+    inputSchema: {
+      json: {
+        type: 'object',
+        properties: {
+          key: { type: 'string', description: "The note key to retrieve, or 'list' to see all." },
+        },
+        required: ['key'],
+      },
+    },
+  },
+  execute: (input) => getNote(input as { key: string }),
+};
