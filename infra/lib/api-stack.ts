@@ -32,11 +32,19 @@ export class ApiStack extends cdk.Stack {
       throttlingBurstLimit: 20,
     };
 
-    // Connect the API to our (soon to be created) Lambda Handler
+    const integration = new apigateway_integrations.HttpLambdaIntegration('LambdaIntegration', props.handler);
+
     httpApi.addRoutes({
       path: '/webhook',
       methods: [apigateway.HttpMethod.POST],
-      integration: new apigateway_integrations.HttpLambdaIntegration('LambdaIntegration', props.handler),
+      integration,
+    });
+
+    // Async transcription polling endpoint
+    httpApi.addRoutes({
+      path: '/status/{jobId}',
+      methods: [apigateway.HttpMethod.GET],
+      integration,
     });
 
     // Output the URL so we can find it
