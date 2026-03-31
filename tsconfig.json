@@ -40,5 +40,10 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "exclude": [
+    "cdk.out",
+    "node_modules",
+    "services/agent/src/skills/_archive"
+  ]
 }

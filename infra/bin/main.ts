@@ -14,7 +14,6 @@ const lambdaStack = new LambdaStack(app, 'AgentLambdaStack', {
     tableName:          dbStack.sessionTable.tableName,
     notesTableName:     dbStack.notesTable.tableName,
     expensesTableName:  dbStack.expensesTable.tableName,
-    audioBucketName:    dbStack.audioBucket.bucketName,
 });
 lambdaStack.addDependency(dbStack);
 

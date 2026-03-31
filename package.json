@@ -4,7 +4,9 @@
   "description": "Event-Driven AI Autonomous Agent on AWS Lambda",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "npm install && cd services/agent && npm install && cd ../.. && ([ -f .env ] || cp .env.example .env && echo '.env created from .env.example — fill in your TABLE_NAME values before running test:local')",
+    "test:local": "tsx services/agent/src/test-local.ts"
   },
   "keywords": [],
   "author": "",

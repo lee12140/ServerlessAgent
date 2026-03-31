@@ -40,13 +40,6 @@ export class ApiStack extends cdk.Stack {
       integration,
     });
 
-    // Async transcription polling endpoint
-    httpApi.addRoutes({
-      path: '/status/{jobId}',
-      methods: [apigateway.HttpMethod.GET],
-      integration,
-    });
-
     // Output the URL so we can find it
     this.apiUrl = httpApi.apiEndpoint;
     new cdk.CfnOutput(this, 'ApiUrl', {

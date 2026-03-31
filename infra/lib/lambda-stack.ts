@@ -9,13 +9,11 @@ interface LambdaStackProps extends cdk.StackProps {
   tableName: string;
   notesTableName: string;
   expensesTableName: string;
-  audioBucketName: string;
 }
 
 export class LambdaStack extends cdk.Stack {
   public readonly middleware: lambda.DockerImageFunction;
   public readonly agent: lambda.DockerImageFunction;
-  public readonly transcriber: lambda.DockerImageFunction;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
@@ -45,23 +43,7 @@ export class LambdaStack extends cdk.Stack {
     });
 
     // -----------------------------------------------------------------------
-    // 2. Transcription Specialist
-    // -----------------------------------------------------------------------
-    this.transcriber = new lambda.DockerImageFunction(this, 'TranscriberFunction', {
-      code: lambda.DockerImageCode.fromImageAsset(path.resolve(rootDir, 'services/transcriber'), {
-        file: 'docker/Dockerfile',
-      }),
-      memorySize: 512,
-      timeout: cdk.Duration.minutes(2),
-      environment: {
-        AUDIO_BUCKET: props.audioBucketName,
-        TABLE_NAME:   props.tableName,
-        REGION:       'eu-central-1',
-      },
-    });
-
-    // -----------------------------------------------------------------------
-    // 3. Middleware Orchestrator
+    // 2. Middleware Orchestrator
     // -----------------------------------------------------------------------
     this.middleware = new lambda.DockerImageFunction(this, 'MiddlewareFunction', {
       code: lambda.DockerImageCode.fromImageAsset(path.resolve(rootDir, 'services/middleware'), {
@@ -70,11 +52,9 @@ export class LambdaStack extends cdk.Stack {
       memorySize: 256,
       timeout: cdk.Duration.seconds(60),
       environment: {
-        API_KEY:                  process.env.API_KEY || '',
-        AGENT_FUNCTION_NAME:      this.agent.functionName,
-        TRANSCRIBE_FUNCTION_NAME: this.transcriber.functionName,
-        TABLE_NAME:               props.tableName,
-        REGION:                   'eu-central-1',
+        API_KEY:             process.env.API_KEY || '',
+        AGENT_FUNCTION_NAME: this.agent.functionName,
+        REGION:              'eu-central-1',
       },
     });
 
@@ -82,9 +62,8 @@ export class LambdaStack extends cdk.Stack {
     // Permissions
     // -----------------------------------------------------------------------
 
-    // Middleware → Agent + Transcriber
+    // Middleware → Agent
     this.agent.grantInvoke(this.middleware);
-    this.transcriber.grantInvoke(this.middleware);
 
     // Agent: Bedrock
     this.agent.addToRolePolicy(new iam.PolicyStatement({
@@ -92,7 +71,7 @@ export class LambdaStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    // Agent: DynamoDB — session table (read/write/scan) + notes + expenses (read/write/scan)
+    // Agent: DynamoDB
     this.agent.addToRolePolicy(new iam.PolicyStatement({
       actions: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:Scan'],
       resources: [
@@ -102,32 +81,12 @@ export class LambdaStack extends cdk.Stack {
       ],
     }));
 
-    // Agent: Secrets Manager — read credentials secret
+    // Agent: Secrets Manager
     this.agent.addToRolePolicy(new iam.PolicyStatement({
       actions: ['secretsmanager:GetSecretValue'],
       resources: [
         `arn:aws:secretsmanager:eu-central-1:${this.account}:secret:ServerlessAgent/credentials*`,
       ],
-    }));
-
-    // Transcriber: S3 + Transcribe + DynamoDB (to store job results)
-    this.transcriber.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['s3:PutObject', 's3:GetObject'],
-      resources: [`arn:aws:s3:::${props.audioBucketName}/*`],
-    }));
-    this.transcriber.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['transcribe:StartTranscriptionJob', 'transcribe:GetTranscriptionJob'],
-      resources: ['*'],
-    }));
-    this.transcriber.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['dynamodb:PutItem'],
-      resources: [`arn:aws:dynamodb:eu-central-1:${this.account}:table/${props.tableName}`],
-    }));
-
-    // Middleware: DynamoDB — read/update transcription job status in session table
-    this.middleware.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
-      resources: [`arn:aws:dynamodb:eu-central-1:${this.account}:table/${props.tableName}`],
     }));
   }
 }

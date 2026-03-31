@@ -53,8 +53,8 @@ export const currencyExchangeSkill: Skill = {
       json: {
         type: 'object',
         properties: {
-          from:   { type: 'string', description: "Source currency code (e.g., 'EUR', 'USD')" },
-          to:     { type: 'string', description: "Target currency code. Omit to get all major rates." },
+          from: { type: 'string', description: "Source currency code (e.g., 'EUR', 'USD')" },
+          to: { type: 'string', description: "Target currency code. Omit to get all major rates." },
           amount: { type: 'number', description: "Amount to convert (default: 1)" },
         },
         required: ['from'],
