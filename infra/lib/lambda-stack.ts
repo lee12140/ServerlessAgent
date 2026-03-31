@@ -28,7 +28,7 @@ export class LambdaStack extends cdk.Stack {
         file: 'docker/Dockerfile',
       }),
       memorySize: 1024,
-      timeout: cdk.Duration.seconds(30),
+      timeout: cdk.Duration.seconds(60),
       environment: {
         TABLE_NAME: props.tableName,
         REGION: 'eu-central-1',
@@ -36,7 +36,9 @@ export class LambdaStack extends cdk.Stack {
         GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
         GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY || '',
         GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || '',
-        CODE_VERSION: '1.0.6', // Bump this to force redeploy
+        GMAIL_SENDER_EMAIL: process.env.GMAIL_SENDER_EMAIL || '',
+        WEATHER_API_KEY: process.env.WEATHER_API_KEY || '',
+        CODE_VERSION: '1.0.7', // Bump this to force redeploy
       },
     });
 
@@ -73,18 +75,26 @@ export class LambdaStack extends cdk.Stack {
     this.agent.grantInvoke(this.middleware);
     this.transcriber.grantInvoke(this.middleware);
 
-    // Agent needs Bedrock, Marketplace, and DynamoDB
+    // Agent needs Bedrock and DynamoDB (scoped to the agent's own table)
     this.agent.addToRolePolicy(new iam.PolicyStatement({
       actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
       resources: ['*'],
     }));
     this.agent.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['aws-marketplace:ViewSubscriptions', 'aws-marketplace:Subscribe', 'aws-marketplace:Unsubscribe'],
+      // Read-only Marketplace access — removed Subscribe/Unsubscribe to prevent accidental charges
+      actions: ['aws-marketplace:ViewSubscriptions'],
       resources: ['*'],
     }));
     this.agent.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem'],
-      resources: ['*'],
+      actions: [
+        'dynamodb:GetItem',
+        'dynamodb:PutItem',
+        'dynamodb:UpdateItem',
+        'dynamodb:Scan', // Required for notes listing and expense queries
+      ],
+      resources: [
+        `arn:aws:dynamodb:eu-central-1:${this.account}:table/${props.tableName}`,
+      ],
     }));
 
     // Transcriber needs S3 and Transcribe
