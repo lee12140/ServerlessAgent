@@ -11,8 +11,10 @@ const dbStack = new DbStack(app, 'AgentDbStack');
 
 // 2. Create the Lambda (Brain) - pass the table name for session memory
 const lambdaStack = new LambdaStack(app, 'AgentLambdaStack', {
-    tableName: dbStack.sessionTable.tableName,
-    audioBucketName: dbStack.audioBucket.bucketName,
+    tableName:          dbStack.sessionTable.tableName,
+    notesTableName:     dbStack.notesTable.tableName,
+    expensesTableName:  dbStack.expensesTable.tableName,
+    audioBucketName:    dbStack.audioBucket.bucketName,
 });
 lambdaStack.addDependency(dbStack);
 

@@ -1,4 +1,5 @@
 import { DynamoMemoryAdapter, type AgentState } from './adapters/dynamo-memory.js';
+import { loadSecrets } from './adapters/secrets.js';
 import { converse, DEFAULT_MODEL_ID } from './adapters/bedrock.js';
 import type { Message } from './adapters/bedrock.js';
 import { getTimeDefinition, getTime } from './skills/get-time.js';
@@ -125,6 +126,7 @@ async function executeReActLoop(messages: Message[]): Promise<string | null> {
 }
 
 export async function runAgentTurn(sessionId: string, userMessage: string): Promise<string> {
+  await loadSecrets();
   const savedState: AgentState = (await memory.load(sessionId)) ?? { messages: [] };
   const messages = buildMessages(savedState, userMessage);
 

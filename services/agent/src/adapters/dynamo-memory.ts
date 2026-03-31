@@ -17,6 +17,16 @@ export interface AgentState {
   updatedAt?: number;
 }
 
+// Keep the last N complete turns (1 turn = 1 user + 1 assistant message = 2 entries).
+// Prevents DynamoDB item from exceeding the 400KB limit on long conversations.
+const MAX_TURNS = 20;
+const MAX_MESSAGES = MAX_TURNS * 2;
+
+function trimMessages(messages: AgentState['messages']): AgentState['messages'] {
+  if (messages.length <= MAX_MESSAGES) return messages;
+  return messages.slice(messages.length - MAX_MESSAGES);
+}
+
 export class DynamoMemoryAdapter {
   constructor(private tableName: string) {}
 
@@ -33,7 +43,11 @@ export class DynamoMemoryAdapter {
       TableName: this.tableName,
       Item: {
         sessionId,
-        agentState: { ...state, updatedAt: Date.now() },
+        agentState: {
+          ...state,
+          messages: trimMessages(state.messages),
+          updatedAt: Date.now(),
+        },
       },
     }));
   }

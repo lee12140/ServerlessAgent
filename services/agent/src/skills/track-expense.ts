@@ -50,9 +50,9 @@ interface LogExpenseInput {
 
 export async function logExpense(input: LogExpenseInput): Promise<string> {
   const { amount, currency = 'EUR', category, description } = input;
-  const tableName = process.env.TABLE_NAME;
+  const tableName = process.env.EXPENSES_TABLE_NAME;
 
-  if (!tableName) return 'Cannot log expense: TABLE_NAME environment variable is not set.';
+  if (!tableName) return 'Cannot log expense: EXPENSES_TABLE_NAME environment variable is not set.';
   if (amount <= 0) return 'Error: Amount must be a positive number.';
 
   const timestamp = Date.now();
@@ -113,9 +113,9 @@ interface ExpenseItem {
 
 export async function getExpenses(input: GetExpensesInput): Promise<string> {
   const limit = input.limit ?? 20;
-  const tableName = process.env.TABLE_NAME;
+  const tableName = process.env.EXPENSES_TABLE_NAME;
 
-  if (!tableName) return 'Cannot read expenses: TABLE_NAME environment variable is not set.';
+  if (!tableName) return 'Cannot read expenses: EXPENSES_TABLE_NAME environment variable is not set.';
 
   try {
     const result = await dynamo.send(new ScanCommand({

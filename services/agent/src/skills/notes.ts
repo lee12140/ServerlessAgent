@@ -40,9 +40,9 @@ interface SetNoteInput {
 
 export async function setNote(input: SetNoteInput): Promise<string> {
   const { key, content } = input;
-  const tableName = process.env.TABLE_NAME;
+  const tableName = process.env.NOTES_TABLE_NAME;
 
-  if (!tableName) return 'Cannot save note: TABLE_NAME environment variable is not set.';
+  if (!tableName) return 'Cannot save note: NOTES_TABLE_NAME environment variable is not set.';
 
   const noteKey = `note#${key.toLowerCase().replace(/\s+/g, '-')}`;
 
@@ -87,9 +87,9 @@ interface GetNoteInput {
 
 export async function getNote(input: GetNoteInput): Promise<string> {
   const { key } = input;
-  const tableName = process.env.TABLE_NAME;
+  const tableName = process.env.NOTES_TABLE_NAME;
 
-  if (!tableName) return 'Cannot read note: TABLE_NAME environment variable is not set.';
+  if (!tableName) return 'Cannot read note: NOTES_TABLE_NAME environment variable is not set.';
 
   // Special key: list all notes
   if (key === 'list') {
