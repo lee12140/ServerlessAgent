@@ -33,7 +33,7 @@ export async function converse({
   systemPrompt,
   tools,
   modelId = DEFAULT_MODEL_ID,
-  maxTokens = 2000,
+  maxTokens = 4096,
 }: ConverseTurn): Promise<ConverseCommandOutput> {
   return bedrock.send(new ConverseCommand({
     modelId,

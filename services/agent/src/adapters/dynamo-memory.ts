@@ -13,7 +13,6 @@ const dynamo = DynamoDBDocumentClient.from(
 
 export interface AgentState {
   messages: { role: 'user' | 'assistant'; content: string }[];
-  context?: Record<string, unknown>;
   updatedAt?: number;
 }
 

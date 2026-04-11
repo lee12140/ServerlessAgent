@@ -40,7 +40,7 @@ export class LambdaStack extends cdk.Stack {
         REGION:              'eu-central-1',
         MODEL_ID:            'eu.amazon.nova-pro-v1:0',
         SECRET_NAME:         'ServerlessAgent/credentials',
-        CODE_VERSION:        '1.1.0',
+        CODE_VERSION:        '1.2.0',
       },
     });
 
@@ -68,12 +68,16 @@ export class LambdaStack extends cdk.Stack {
         file: 'docker/Dockerfile',
       }),
       memorySize: 256,
-      timeout: cdk.Duration.seconds(60),
+      // 28s — just under the API Gateway HTTP API hard limit of 29s.
+      // Prevents Middleware from burning Lambda-hours after API GW has already
+      // timed out and disconnected the client.
+      timeout: cdk.Duration.seconds(28),
       environment: {
         API_KEY:                  process.env.API_KEY || '',
         AGENT_FUNCTION_NAME:      this.agent.functionName,
         TRANSCRIBE_FUNCTION_NAME: this.transcriber.functionName,
         TABLE_NAME:               props.tableName,
+        AUDIO_BUCKET:             props.audioBucketName,
         REGION:                   'eu-central-1',
       },
     });
@@ -128,6 +132,13 @@ export class LambdaStack extends cdk.Stack {
     this.middleware.addToRolePolicy(new iam.PolicyStatement({
       actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
       resources: [`arn:aws:dynamodb:eu-central-1:${this.account}:table/${props.tableName}`],
+    }));
+
+    // Middleware: S3 — pre-upload audio before passing to transcriber
+    // (avoids 256KB async Lambda payload limit for voice messages)
+    this.middleware.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['s3:PutObject'],
+      resources: [`arn:aws:s3:::${props.audioBucketName}/*`],
     }));
   }
 }

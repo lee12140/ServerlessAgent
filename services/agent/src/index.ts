@@ -13,16 +13,20 @@ interface AgentEvent {
 export const handler = async (event: AgentEvent) => {
     console.log('Agent received:', JSON.stringify(event));
 
-    const { message, sessionId = 'default' } = event;
+    const { message, sessionId } = event;
+    const resolvedSessionId = sessionId || crypto.randomUUID();
 
     if (!message) {
         throw new Error('No message provided to Agent');
     }
 
-    const reply = await runAgentTurn(sessionId, message);
+    // Log metadata only — never log message content (privacy)
+    console.log(`Agent invoked: sessionId=${resolvedSessionId}, messageLength=${message.length}`);
+
+    const reply = await runAgentTurn(resolvedSessionId, message);
 
     return {
         message: reply,
-        sessionId,
+        sessionId: resolvedSessionId,
     };
 };

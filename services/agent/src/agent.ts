@@ -4,6 +4,10 @@ import type { Message } from './adapters/bedrock.js';
 import { loadSecrets } from './adapters/secrets.js';
 import { skills } from './skills/index.js';
 
+// Load secrets at cold start (module-level await in ESM).
+// Runs once when the Lambda container initialises — not on every request.
+await loadSecrets();
+
 const MODEL_ID   = process.env.MODEL_ID || DEFAULT_MODEL_ID;
 const MAX_ITERATIONS = 8;
 
@@ -60,7 +64,13 @@ async function executeReActLoop(messages: Message[]): Promise<string | null> {
 
       messages.push({ role: 'assistant', content: response.output!.message!.content! } as Message);
 
-      const result = await (TOOL_IMPLEMENTATIONS[name!]?.(input) ?? Promise.resolve('Tool not found.'));
+      let result: string;
+      try {
+        result = await (TOOL_IMPLEMENTATIONS[name!]?.(input) ?? Promise.resolve('Tool not found.')) as string;
+      } catch (toolError: any) {
+        console.error(`Tool "${name}" threw an unhandled error:`, toolError.message);
+        result = `Tool "${name}" encountered an error: ${toolError.message}`;
+      }
       messages.push({
         role: 'user',
         content: [{ toolResult: { toolUseId, content: [{ text: result as string }] } }],
@@ -71,8 +81,6 @@ async function executeReActLoop(messages: Message[]): Promise<string | null> {
 }
 
 export async function runAgentTurn(sessionId: string, userMessage: string): Promise<string> {
-  await loadSecrets();
-
   const savedState: AgentState = (await memory.load(sessionId)) ?? { messages: [] };
   const messages = buildMessages(savedState, userMessage);
   const finalResponse = await executeReActLoop(messages);
