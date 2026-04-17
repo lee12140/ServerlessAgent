@@ -1,0 +1,88 @@
+﻿node.exe : 
+In Zeile:1 Zeichen:1
++ & "C:\Program 
+Files\nodejs/node.exe" "C:\
+Users\leona\AppData\Roaming
+\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (:St  
+  ring) [], RemoteExcept   
+ ion
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+Ô£¿  Synthesis time: 5.25s
+
+AgentDbStack
+AgentDbStack: deploying... 
+[1/3]
+AgentLambdaStack: start: 
+Building AgentLambdaStack 
+Template
+AgentLambdaStack: success: 
+Built AgentLambdaStack 
+Template
+AgentLambdaStack: start: 
+Building 
+AgentFunction/AssetImage
+ERROR: failed to connect 
+to the docker API at npipe:
+////./pipe/dockerDesktopLin
+uxEngine; check if the 
+path is correct and if the 
+daemon is running: open //.
+/pipe/dockerDesktopLinuxEng
+ine: The system cannot 
+find the file specified.
+AgentDbStack: creating 
+CloudFormation changeset...
+AgentLambdaStack: fail: 
+docker build --tag cdkasset
+-ba982dfda91f8d2d5ebc3a6111
+a3c4b7d5de9a4d004c5bc597aeb
+12bfe0601db --file 
+docker/Dockerfile . exited 
+with error code 1: ERROR: 
+failed to connect to the 
+docker API at npipe:////./p
+ipe/dockerDesktopLinuxEngin
+e; check if the path is 
+correct and if the daemon 
+is running: open //./pipe/d
+ockerDesktopLinuxEngine: 
+The system cannot find the 
+file specified.
+AgentDbStack | 0/8 | 
+11:19:27 | 
+UPDATE_IN_PROGRESS   | 
+AWS::CloudFormation::Stack 
+| AgentDbStack User 
+Initiated
+AgentDbStack | 0/8 | 
+11:19:29 | 
+UPDATE_ROLLBACK_IN_P | 
+AWS::CloudFormation::Stack 
+| AgentDbStack Delete 
+canceled. Cannot delete 
+export AgentDbStack:Exports
+OutputRefAudioBucket96BEECB
+AEFFB6375 as it is in use 
+by AgentLambdaStack.
+AgentDbStack | 1/8 | 
+11:19:32 | 
+UPDATE_ROLLBACK_COMP | 
+AWS::CloudFormation::Stack 
+| AgentDbStack 
+AgentDbStack | 2/8 | 
+11:19:33 | 
+UPDATE_ROLLBACK_COMP | 
+AWS::CloudFormation::Stack 
+| AgentDbStack 
+ÔØî  AgentDbStack failed: 
+DeploymentError: The stack 
+named AgentDbStack failed 
+to deploy: 
+UPDATE_ROLLBACK_COMPLETE

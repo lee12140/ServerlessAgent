@@ -9,5 +9,8 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "verbatimModuleSyntax": true
-  }
+  },
+  "exclude": [
+    "./src/skills/_archive"
+  ]
 }

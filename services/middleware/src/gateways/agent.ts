@@ -1,14 +1,12 @@
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { decodeLambdaPayload } from '../utils/decode.js';
+import type { AgentResponse } from '../models/responses.js';
 
 const REGION = process.env.REGION ?? 'eu-central-1';
 const AGENT_FUNCTION_NAME = process.env.AGENT_FUNCTION_NAME;
 if (!AGENT_FUNCTION_NAME) throw new Error('AGENT_FUNCTION_NAME env var is not set');
 
-export interface AgentResponse {
-  message: string;
-  sessionId: string;
-}
+export type { AgentResponse };
 
 export interface AgentGateway {
   call(message: string, sessionId: string, userId: string): Promise<AgentResponse>;
