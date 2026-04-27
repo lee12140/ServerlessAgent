@@ -12,7 +12,7 @@ async function readCalendarEvents(input: { maxResults?: number; daysAhead?: numb
   if (!authEmail || !authKey) return 'Cannot read calendar: Google credentials are not configured.';
 
   try {
-    const auth = new google.auth.JWT(authEmail, undefined, authKey, ['https://www.googleapis.com/auth/calendar.readonly']);
+    const auth = new google.auth.JWT({ email: authEmail, key: authKey, scopes: ['https://www.googleapis.com/auth/calendar.readonly'] });
     const calendar = google.calendar({ version: 'v3', auth });
 
     const now = new Date();

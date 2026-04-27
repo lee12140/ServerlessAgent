@@ -27,7 +27,7 @@ async function createMeeting(input: CreateMeetingInput): Promise<string> {
   }
 
   try {
-    const auth = new google.auth.JWT(authEmail, undefined, authKey, ['https://www.googleapis.com/auth/calendar']);
+    const auth = new google.auth.JWT({ email: authEmail, key: authKey, scopes: ['https://www.googleapis.com/auth/calendar'] });
     const calendar = google.calendar({ version: 'v3', auth });
 
     const response = await calendar.events.insert({
